@@ -1,0 +1,57 @@
+- name: "mkdir datadir"
+  file: dest=/data state=directory mode=0755
+
+- name: 'install apt db packages'
+  apt: pkg="{{item}}" state=present
+  with_items:
+    - zsh
+    - tree
+    - mysql-server-5.6
+    - python-mysqldb
+  tags: mysqld
+
+- name: "disable apparmor mysql"
+  sudo_user: root
+  service: name=apparmor state=stopped
+
+- name: "mkdir mysql datadir"
+  file: dest=/data/mysql state=directory mode=0755 owner=mysql
+
+- name: "link my-default.cnf to /etc/mysql/my.cnf"
+  sudo_user: root
+  command: bash -lc "ln -fs /etc/mysql/my.cnf /usr/share/mysql/my-default.cnf"
+
+- name: "check if already installed mysql"
+  sudo_user: root
+  stat: path=/data/mysql/mysql
+  register: mysql_already_installed
+
+- name: "mysql_install_db"
+  sudo_user: root
+  command: bash -lc "mysql_install_db --datadir=/data/mysql"
+  when: mysql_already_installed.stat.exists == False
+
+- name: "set my.cnf to db server"
+  template: src="{{ db_my_cnf }}" dest=/etc/mysql/my.cnf owner=mysql mode=0644
+  register: my_cnf
+
+- name: "set charset.cnf to db server"
+  template: src={{ db_charset_cnf }} dest=/etc/mysql/conf.d/charset.cnf owner=mysql mode=0644
+  register: charset_cnf
+
+- name: "restart mysql"
+  service: name=mysql state=restarted
+  when: my_cnf.changed or charset_cnf.changed
+
+- name: "create database"
+  mysql_db: db={{ db_name }} state=present encoding=utf8mb4
+  tags: mysqld
+
+- name: "create database user"
+  mysql_user: >-
+    name={{ db_user }}
+    password="{{ db_password }}"
+    priv={{ db_name }}.*:ALL
+    state=present
+  tags: mysqld
+

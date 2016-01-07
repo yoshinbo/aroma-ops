@@ -1,0 +1,19 @@
+- hosts: dev
+  sudo: true
+  vars:
+    rbenv:
+      env: system
+      version: v0.4.0
+      ruby_version: 2.1.5
+    timezone: Asia/Tokyo
+    db_user: aroma_w
+    db_password: aroma_w
+    db_name: aroma_development
+    db_my_cnf: ../files/my.cnf
+    db_charset_cnf: ../files/charset.cnf.dev
+  roles:
+    - {role: users,      tags: ['init']}
+    - {role: apt-dev,    tags: ['apt-dev']}
+    - {role: apt-db,     tags: ['apt-db']}
+    - {role: zzet.rbenv, tags: ['rbenv']}
+    - {role: apt-web,    tags: ['apt-web']}

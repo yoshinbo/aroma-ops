@@ -1,0 +1,58 @@
+- name: apt update
+  sudo_user: root
+  command: bash -lc "apt-get update"
+
+- name: 'install apt packages'
+  apt: pkg="{{item}}" state=present
+  with_items:
+    - language-pack-ja
+
+- name: locale update
+  sudo_user: root
+  command: bash -lc "update-locale LANG=ja_JP.UTF-8"
+
+- name: add users
+  user: name="{{item.n}}"
+        password="{{item.p}}"
+        shell=/bin/bash
+        state=present
+        append=yes
+        groups=sudo
+  with_items:
+    # パスワードは以下のコマンドで生成
+    # $ openssl passwd -salt aroma -1 <パスワード>
+    - { n: 'yoshinbo', p: '$1$aroma$riVml3GV2hyoEq22RmRQt1' }
+
+- name: add app user
+  user: name=aroma shell=/bin/bash state=present append=yes
+
+- authorized_key: user=yoshinbo key="{{ lookup('file', 'yoshinbo.pub') }}"
+
+- name: add app user
+  authorized_key: user=aroma key="{{ item }}"
+  with_file:
+    - yoshinbo.pub
+
+- name: Set timezone variables
+#  copy: content='Etc/UTC'
+  copy: content="{{ timezone }}"
+        dest=/etc/timezone
+        owner=root
+        group=root
+        mode=0644
+        backup=yes
+  register: timezone
+
+- name: update timezone
+  command: dpkg-reconfigure --frontend noninteractive tzdata
+  when: timezone.changed
+
+- name: "check if exist /root/.ssh/authorized_keys"
+  sudo_user: root
+  stat: path=/root/.ssh/authorized_keys
+  register: root_authorized_keys
+
+- name: delete root authorized_keys
+  sudo_user: root
+  command: bash -lc 'rm /root/.ssh/authorized_keys'
+  when: root_authorized_keys.stat.exists == True

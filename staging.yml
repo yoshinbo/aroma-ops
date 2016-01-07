@@ -1,0 +1,18 @@
+- hosts: staging
+  sudo: true
+  vars:
+    rbenv:
+      env: system
+      version: v0.4.0
+      ruby_version: 2.1.5
+    timezone: Asia/Tokyo
+    db_user: aroma
+    db_password: xU84.VeCmg=4=B.g
+    db_name: aroma_staging
+    db_my_cnf: ../files/my.cnf
+    db_charset_cnf: ../files/charset.cnf.dev
+  roles:
+    - {role: users,      tags: ['init']}
+    - {role: apt-db,     tags: ['apt-db']}
+    - {role: zzet.rbenv, tags: ['rbenv']}
+    - {role: apt-web,    tags: ['apt-web']}

@@ -1,0 +1,11 @@
+Host aroma-gw
+  HostName 210.140.64.146
+  Port 52022
+
+Host aroma-dev
+  HostName 192.168.33.10
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null
+
+Host aroma-*
+  User {{ item }}
