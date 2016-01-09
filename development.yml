@@ -11,6 +11,7 @@
     db_name: aroma_development
     db_my_cnf: ../files/my.cnf
     db_charset_cnf: ../files/charset.cnf.dev
+    apparmor_mysqld: ../files/usr.sbin.mysqld
   roles:
     - {role: users,      tags: ['init']}
     - {role: apt-dev,    tags: ['apt-dev']}

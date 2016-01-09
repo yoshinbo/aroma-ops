@@ -10,9 +10,14 @@
     - python-mysqldb
   tags: mysqld
 
-- name: "disable apparmor mysql"
+- name: "set usr.sbin.mysqld to apparmor server"
+  template: src="{{ apparmor_mysqld }}" dest=/etc/apparmor.d/local/usr.sbin.mysqld owner=root mode=0644
+  register: apparmor_mysqld
+
+- name: "restarted apparmor mysql"
   sudo_user: root
-  service: name=apparmor state=stopped
+  service: name=apparmor state=restarted
+  when: apparmor_mysqld.changed
 
 - name: "mkdir mysql datadir"
   file: dest=/data/mysql state=directory mode=0755 owner=mysql
